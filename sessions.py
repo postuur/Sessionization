@@ -8,9 +8,6 @@ Currently doing with the dataset and not systemtime, so timeouts and whatnot
 are not handled correctly. 
 """
 
-import os
-import sys
-#import numpy as np
 import json
 from io import StringIO
         
@@ -77,9 +74,6 @@ class Session:
             self.track_end = event.timestamp
         
         if event.event_type == "track_hearbeat": #THERE'S A TYPO IN THE DATA... hearbeat, not heartbeat
-            #print("REEEEEe")
-            #print(self.track_start)
-            #print(self.track_end)
             if self.track_start == 0:
                 self.track_start = event.timestamp - 10
                 self.track_end = event.timestamp -10
