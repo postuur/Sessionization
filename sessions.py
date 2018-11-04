@@ -16,6 +16,9 @@ class SessionHandler:
     def __init__(self):
         self.current_sessions = {}
         
+    '''
+    Read events from the "stream", add them to a dict of sessions nased on user_id and content_id.
+    '''
     def read(self, data):
         data = json.loads(data) 
         event = Event(data["timestamp"],data["event_type"],data["user_id"],data["content_id"])
@@ -27,16 +30,24 @@ class SessionHandler:
         self.current_sessions[session_id].addEvent(event)
         self.checkTimeouts(event.timestamp) # A bit clunky to check timeouts every time an event comes in, will not ha
         
+    '''
+    Write all of the sessions out into stdout. Stop has to be called separately before this, even though it should be here.
+    '''
     def write(self): # Write all out on request.
         for session_id in self.current_sessions.keys():
             print(self.current_sessions[session_id].serialize())
         
-        
-    def checkTimeouts(self, timestamp): # Hacky for datasets
+    '''
+    Check timeouts, made to work hackily for the datasets.
+    '''
+    def checkTimeouts(self, timestamp): 
         for session_id in self.current_sessions.keys():
             if (timestamp - 60) > self.current_sessions[session_id].last_active:
                 self.current_sessions[session_id].handleEnd(self.current_sessions[session_id].last_active + 60)
                 
+    '''
+    Stop the sessionization, parse ends to open sessions.
+    '''
     def stop(self):
         for session_id in self.current_sessions.keys():
             if self.current_sessions[session_id].session_end < 0: # Finalize open sessions
@@ -59,6 +70,9 @@ class Session:
         self.track_end = 0
         self.last_active = 0
     
+    '''
+    Add events to a session. Could be cases for slightly faster processing, now ifs. 
+    '''
     def addEvent(self, event):
         self.event_count += 1
         self.last_active += event.timestamp - self.last_active
@@ -87,11 +101,17 @@ class Session:
         if event.event_type == "stream_end": # Would be prettier to call system-time
             self.handleEnd(event.timestamp)
 
+    '''
+    Close a session, used in a few places.
+    '''
     def handleEnd(self, timestamp):
         self.session_end = timestamp
         self.last_active += timestamp - self.last_active
         self.total_time = self.session_end - self.session_start
         
+    '''
+    Serialize into a jsonable-format for printing.
+    '''
     def serialize(self):
         return {
             'user_id' : self.user_id,
@@ -112,8 +132,10 @@ class Event:
         self.user_id = user_id
         self.content_id = content_id
 
-#---------------------
 
+'''
+Example function to call the system with datasets.
+'''
 def callSessions(datafile):
     data = open(datafile).readlines()
     
